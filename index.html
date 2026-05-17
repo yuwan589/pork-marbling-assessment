@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PorkMS: Pork Marbling Measurement System</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: #e8eef5;
+            color: #333;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        /* ===== 全局蓝色主题变量 ===== */
+        :root {
+            --primary-blue: #1565C0;
+            --dark-blue: #0D47A1;
+            --navy-blue: #1a237e;
+            --light-blue: #1976D2;
+            --pale-blue: #e3f2fd;
+            --border-blue: #90CAF9;
+        }
+
+        /* ===== 主页面 ===== */
+        .main-page { display: block; }
+
+        /* 顶部栏 */
+        .header {
+            background: linear-gradient(135deg, #0D47A1 0%, #1565C0 100%);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(13, 71, 161, 0.3);
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-help {
+            padding: 8px 18px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 20px;
+            color: #1565C0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-help:hover { 
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        .btn-help-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #1565C0;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* 内容 */
+        .content {
+            padding: 24px 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 模块 */
+        .module {
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(13, 71, 161, 0.08);
+            overflow: hidden;
+        }
+        .module-header {
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, #1565C0 0%, #1976D2 100%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .module-header::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: #fff;
+            border-radius: 2px;
+        }
+        .module-body { padding: 24px; }
+
+        /* 信息表 */
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table td { padding: 12px 0; vertical-align: middle; }
+        .info-table .label {
+            width: 110px;
+            color: #1565C0;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .info-table input, .info-table select {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 220px;
+            transition: all 0.3s;
+        }
+        .info-table input:focus, .info-table select:focus {
+            outline: none;
+            border-color: #1565C0;
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
+        }
+
+        /* 上传区 - 单张 */
+        .single-upload-area {
+            max-width: 380px;
+            margin: 0 auto;
+        }
+        .upload-card {
+            background: #fafbfc;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s;
+        }
+        .upload-card:hover {
+            border-color: #90CAF9;
+            box-shadow: 0 4px 12px rgba(21, 101, 192, 0.1);
+        }
+        .upload-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1565C0;
+            margin-bottom: 12px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+        .drop-zone {
+            border: 2px dashed #90CAF9;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            aspect-ratio: 3 / 4;
+            max-height: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #1565C0;
+            background: #e3f2fd;
+            border-style: solid;
+        }
+        .drop-zone.has-image { 
+            padding: 8px;
+            border-style: solid;
+            border-color: #90CAF9;
+        }
+        .drop-zone-icon { font-size: 36px; color: #90CAF9; margin-bottom: 8px; font-weight: 300; }
+        .drop-zone-text { color: #666; font-size: 13px; }
+        .drop-zone-hint { color: #999; font-size: 11px; margin-top: 4px; }
+        .preview-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+        .remove-btn {
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #d32f2f;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            line-height: 28px;
+            transition: all 0.2s;
+        }
+        .drop-zone.has-image .remove-btn { display: block; }
+        .remove-btn:hover { background: #b71c1c; transform: scale(1.1); }
+
+        .btn-analyze {
+            width: 100%;
+            padding: 12px;
+            margin-top: 14px;
+            background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-analyze:hover:not(:disabled) { 
+            background: linear-gradient(135deg, #0D47A1 0%, #1565C0 100%);
+            box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+        }
+        .btn-analyze:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-analyze .spinner {
+            display: none;
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .btn-analyze.loading .spinner { display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 剩余次数横幅 */
+        .quota-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1.5px solid #90CAF9;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+        }
+        .quota-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .quota-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1565C0;
+        }
+        .quota-count {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0D47A1;
+        }
+        .quota-count.warning { color: #e65100; }
+        .quota-count.exhausted { color: #d32f2f; }
+        .quota-hint {
+            font-size: 12px;
+            color: #666;
+        }
+        .quota-exhausted-msg {
+            display: none;
+            background: #fff3e0;
+            border: 1.5px solid #ffb74d;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            color: #e65100;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .quota-exhausted-msg.show { display: block; }
+
+        /* Test Images Gallery */
+        .test-images-module {
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(13, 71, 161, 0.08);
+            overflow: hidden;
+        }
+        .test-images-header {
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, #388E3C 0%, #43A047 100%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-images-header::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: #fff;
+            border-radius: 2px;
+        }
+        .test-images-body {
+            padding: 20px 24px;
+        }
+        .test-images-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+        }
+        .test-image-item {
+            background: #fafbfc;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .test-image-item:hover {
+            border-color: #43A047;
+            box-shadow: 0 4px 12px rgba(67, 160, 71, 0.15);
+            transform: translateY(-2px);
+        }
+        .test-image-wrapper {
+            background: #000;
+            border-radius: 6px;
+            overflow: hidden;
+            aspect-ratio: 3 / 4;
+            margin-bottom: 10px;
+        }
+        .test-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .test-image-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #388E3C;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .btn-test-analyze {
+            width: 100%;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+        .btn-test-analyze:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0D47A1 0%, #1565C0 100%);
+            box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+        }
+        .btn-test-analyze:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-test-analyze.loading {
+            background: #1565C0;
+            opacity: 0.8;
+        }
+        .btn-test-analyze .spinner {
+            display: none;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .btn-test-analyze.loading .spinner { display: inline-block; }
+
+        /* 历史结果窗口 */
+        .history-module {
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(13, 71, 161, 0.08);
+            overflow: hidden;
+        }
+        .history-module-header {
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg, #1565C0 0%, #1976D2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .history-module-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-module-header-left::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: #fff;
+            border-radius: 2px;
+        }
+        .history-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-clear-history {
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-clear-history:hover { background: rgba(255,255,255,0.28); }
+        .btn-export-history {
+            padding: 6px 14px;
+            background: rgba(255,152,0,0.85);
+            border: 1px solid rgba(255,152,0,0.6);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-export-history:hover { background: rgba(230,81,0,0.9); }
+
+        .history-body {
+            padding: 0;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .history-empty {
+            padding: 60px 20px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+        .history-empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.4; }
+
+        .history-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e8eef5;
+            transition: background 0.2s;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .history-item:hover { background: #f5f9ff; }
+        .history-item:last-child { border-bottom: none; }
+        .history-seq {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1565C0, #1976D2);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .history-thumb {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+        .history-marked-thumb {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #43a047;
+            flex-shrink: 0;
+        }
+        .history-info {
+            flex: 1;
+        }
+        .history-time {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+        .history-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .history-stat {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 6px 14px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 90px;
+        }
+        .history-stat-label {
+            font-size: 10px;
+            color: #1565C0;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .history-stat-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0D47A1;
+        }
+        .history-stat-value.grade-val {
+            color: #fff;
+            background: linear-gradient(135deg, #d32f2f, #f44336);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .hidden-input { display: none; }
+
+        /* ===== Help Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 660px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+            animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.92) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-head {
+            padding: 20px 24px 16px;
+            border-bottom: 2px solid #e3f2fd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .modal-head-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0D47A1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-head-title-icon {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1565C0, #1976D2);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close {
+            width: 32px; height: 32px;
+            border: none;
+            background: #f0f4f8;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: #e3f2fd; color: #1565C0; transform: rotate(90deg); }
+
+        /* 帮助 Tab 导航 */
+        .help-nav {
+            display: flex;
+            gap: 0;
+            padding: 12px 24px 0;
+            border-bottom: 2px solid #e3f2fd;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .help-nav-btn {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            color: #888;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .help-nav-btn.active { color: #1565C0; border-bottom-color: #1565C0; font-weight: 700; }
+        .help-nav-btn:hover:not(.active) { color: #1565C0; background: #f0f6ff; border-radius: 6px 6px 0 0; }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .help-panel { display: none; }
+        .help-panel.active { display: block; }
+
+        /* 帮助内容样式 */
+        .help-section { margin-bottom: 22px; }
+        .help-section:last-child { margin-bottom: 0; }
+        .help-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0D47A1;
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 3px solid #1565C0;
+        }
+        .help-section p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
+        .help-info-card {
+            background: #f0f6ff;
+            border: 1px solid #c5deff;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+        }
+        .help-info-card .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px dashed #d0e4f8;
+        }
+        .help-info-card .row:last-child { border-bottom: none; }
+        .help-info-card .key {
+            width: 90px;
+            font-size: 12px;
+            color: #1565C0;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .help-info-card .val {
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+        }
+        .help-info-card .val .badge {
+            display: inline-block;
+            background: #1565C0;
+            color: #fff;
+            padding: 1px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .help-steps { counter-reset: step; }
+        .help-step {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .help-step-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1565C0, #1976D2);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .help-step-body { flex: 1; }
+        .help-step-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 4px; }
+        .help-step-desc { font-size: 12px; color: #777; line-height: 1.7; }
+        .help-tip {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #7c5700;
+            line-height: 1.7;
+        }
+        .help-tip-title { font-weight: 700; color: #e65100; margin-bottom: 4px; font-size: 13px; }
+        .help-grade-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .help-grade-table th {
+            background: linear-gradient(90deg, #1565C0, #1976D2);
+            color: #fff;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .help-grade-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e8eef5;
+        }
+        .help-grade-table tr:nth-child(even) td { background: #f5f9ff; }
+        .help-badge-grade {
+            display: inline-block;
+            background: linear-gradient(135deg, #d32f2f, #f44336);
+            color: #fff;
+            padding: 1px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Page -->
+    <div class="main-page" id="mainPage">
+        <header class="header">
+            <div class="header-title">PorkMS: Pork Marbling Measurement System</div>
+            <div class="header-right">
+                <button class="btn-help" onclick="openHelp()">
+                    <span class="btn-help-icon">?</span>Help
+                </button>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- 剩余次数横幅 -->
+            <div class="quota-banner" id="quotaBanner">
+                <div class="quota-info">
+                    <div class="quota-label">Remaining Measurements:</div>
+                    <div class="quota-count" id="quotaCount">100</div>
+                    <div class="quota-hint">times left</div>
+                </div>
+                <div style="font-size:12px;color:#1565C0;">Each successful analysis uses 1 measurement</div>
+            </div>
+            <div class="quota-exhausted-msg" id="quotaExhaustedMsg">
+                Trial limit reached. Please contact the developer to continue using PorkMS: Pork Marbling Measurement System.
+            </div>
+
+            <!-- Module 1: Info Table -->
+            <div class="module">
+                <div class="module-header">Animal Measurement Info</div>
+                <div class="module-body">
+                    <table class="info-table">
+                        <tr>
+                            <td class="label">Location</td>
+                            <td><input type="text" id="location" placeholder="Enter location"></td>
+                            <td class="label">Operator</td>
+                            <td><input type="text" id="operator" placeholder="Enter operator"></td>
+                            <td class="label">Breed</td>
+                            <td><input type="text" id="breed" placeholder="Enter breed"></td>
+                        </tr>
+                        <tr>
+                            <td class="label">Gender</td>
+                            <td>
+                                <select id="gender">
+                                    <option value="">Select</option>
+                                    <option value="Boar">Boar</option>
+                                    <option value="Sow">Sow</option>
+                                    <option value="Barrow">Barrow</option>
+                                </select>
+                            </td>
+                            <td class="label">Date</td>
+                            <td colspan="3"><input type="date" id="testDate"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Test Images Gallery -->
+            <div class="test-images-module">
+                <div class="test-images-header">Standard Test Images</div>
+                <div class="test-images-body">
+                    <div class="test-images-grid" id="testImagesGrid">
+                        <div class="test-image-item" data-grade="1">
+                            <div class="test-image-wrapper">
+                                <img src="./images/test_1.jpeg" alt="Grade 1" id="testImg1">
+                            </div>
+                            <div class="test-image-label">Grade 1</div>
+                            <button class="btn-test-analyze" id="btnTest1" onclick="analyzeTestImage(1)"><span class="spinner"></span>Analyze</button>
+                        </div>
+                        <div class="test-image-item" data-grade="2">
+                            <div class="test-image-wrapper">
+                                <img src="./images/test_2.jpeg" alt="Grade 2" id="testImg2">
+                            </div>
+                            <div class="test-image-label">Grade 2</div>
+                            <button class="btn-test-analyze" id="btnTest2" onclick="analyzeTestImage(2)"><span class="spinner"></span>Analyze</button>
+                        </div>
+                        <div class="test-image-item" data-grade="3">
+                            <div class="test-image-wrapper">
+                                <img src="./images/test_3.jpeg" alt="Grade 3" id="testImg3">
+                            </div>
+                            <div class="test-image-label">Grade 3</div>
+                            <button class="btn-test-analyze" id="btnTest3" onclick="analyzeTestImage(3)"><span class="spinner"></span>Analyze</button>
+                        </div>
+                        <div class="test-image-item" data-grade="4">
+                            <div class="test-image-wrapper">
+                                <img src="./images/test_4.jpeg" alt="Grade 4" id="testImg4">
+                            </div>
+                            <div class="test-image-label">Grade 4</div>
+                            <button class="btn-test-analyze" id="btnTest4" onclick="analyzeTestImage(4)"><span class="spinner"></span>Analyze</button>
+                        </div>
+                        <div class="test-image-item" data-grade="5">
+                            <div class="test-image-wrapper">
+                                <img src="./images/test_5.jpeg" alt="Grade 5" id="testImg5">
+                            </div>
+                            <div class="test-image-label">Grade 5</div>
+                            <button class="btn-test-analyze" id="btnTest5" onclick="analyzeTestImage(5)"><span class="spinner"></span>Analyze</button>
+                        </div>
+                        <div class="test-image-item" data-grade="6">
+                            <div class="test-image-wrapper">
+                                <img src="./images/test_6.jpeg" alt="Grade 6" id="testImg6">
+                            </div>
+                            <div class="test-image-label">Grade 6</div>
+                            <button class="btn-test-analyze" id="btnTest6" onclick="analyzeTestImage(6)"><span class="spinner"></span>Analyze</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 2: Single Image Upload -->
+            <div class="module">
+                <div class="module-header">Image Upload &amp; Measurement</div>
+                <div class="module-body">
+                    <div class="single-upload-area">
+                        <div class="upload-card">
+                            <div class="upload-card-title">Import Image</div>
+                            <div class="drop-zone" id="dropZone1" onclick="document.getElementById('fileInput1').click()">
+                                <div class="drop-zone-icon">+</div>
+                                <div class="drop-zone-text">Click or drag to upload</div>
+                                <div class="drop-zone-hint">JPG/PNG supported</div>
+                                <button class="remove-btn" onclick="removeImage(event)">×</button>
+                            </div>
+                            <input type="file" id="fileInput1" class="hidden-input" accept="image/*">
+                            <button class="btn-analyze" id="analyzeBtn1" onclick="analyzeImage()" disabled>
+                                <span class="spinner"></span>Start Measurement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 3: History Results -->
+            <div class="history-module" id="historyModule">
+                <div class="history-module-header">
+                    <div class="history-module-header-left">Measurement History Results</div>
+                    <div class="history-actions">
+                        <button class="btn-export-history" onclick="exportAllResults()">Export All as CSV</button>
+                        <button class="btn-clear-history" onclick="clearAllHistory()">Clear All Results</button>
+                    </div>
+                </div>
+                <div class="history-body" id="historyBody">
+                    <div class="history-empty" id="historyEmpty">
+                        <div class="history-empty-icon">&#9633;</div>
+                        <div>No measurement records yet. Import an image and start measuring.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Help Modal ===== -->
+    <div class="modal-overlay" id="helpModal" onclick="closeHelpOutside(event)">
+        <div class="modal-box">
+            <div class="modal-head">
+                <div class="modal-head-title">
+                    <div class="modal-head-title-icon">?</div>
+                    PorkMS: Help &amp; Guide
+                </div>
+                <button class="modal-close" onclick="closeHelp()">×</button>
+            </div>
+            <div class="help-nav" id="helpNav">
+                <button class="help-nav-btn active" onclick="switchHelp('overview', this)">System Overview</button>
+                <button class="help-nav-btn" onclick="switchHelp('info', this)">Measurement Info</button>
+                <button class="help-nav-btn" onclick="switchHelp('operation', this)">Operation Steps</button>
+                <button class="help-nav-btn" onclick="switchHelp('quota', this)">Trial Quota</button>
+                <button class="help-nav-btn" onclick="switchHelp('grade', this)">Grade Reference</button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Tab 1：System Overview -->
+                <div class="help-panel active" id="help-overview">
+                    <div class="help-section">
+                        <h3>About PorkMS</h3>
+                        <p><strong>PorkMS: Pork Marbling Measurement System</strong> is a browser-based image analysis tool. Based on image processing algorithms, it automatically analyzes fat distribution in muscle cross-section images, outputs Fat Ratio and Marbling Grade. No login or registration is required — open the page and start measuring immediately.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3>Key Features</h3>
+                        <div class="help-info-card">
+                            <div class="row">
+                                <span class="key">No Login</span>
+                                <span class="val">Open the page and start using immediately, no account needed</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Single Image Mode</span>
+                                <span class="val">Import one image, measure one, save one — simple and efficient</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">History Records</span>
+                                <span class="val">All results automatically saved in the results panel, sorted by time</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Export CSV</span>
+                                <span class="val">Export all historical measurement data as a CSV file</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Trial Quota</span>
+                                <span class="val">100 measurements per trial. Contact the developer for extended access.</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Local Processing</span>
+                                <span class="val">All image analysis runs entirely in your browser, no data uploaded</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-tip">
+                        <div class="help-tip-title">Privacy Notice</div>
+                        PorkMS: Pork Marbling Measurement System runs entirely locally in your browser. No images or data are sent to any server. Your data is completely private.
+                    </div>
+                </div>
+
+                <!-- Tab 2：Measurement Info -->
+                <div class="help-panel" id="help-info">
+                    <div class="help-section">
+                        <h3>Form Field Guide</h3>
+                        <p>At the top of the page is the "Animal Measurement Info" panel. Filling in this information is optional but recommended for record-keeping. All entered data will be included in the exported CSV file.</p>
+                        <div class="help-info-card">
+                            <div class="row">
+                                <span class="key">Location</span>
+                                <span class="val">Slaughterhouse or lab name, e.g. "ABC Abattoir"</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Operator</span>
+                                <span class="val">Name of the person performing this measurement</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Breed</span>
+                                <span class="val">Pig breed, e.g. "Duroc", "Landrace", etc.</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Gender</span>
+                                <span class="val">Boar / Sow / Barrow, select from dropdown</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Date</span>
+                                <span class="val">System auto-fills today's date; can be manually edited</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-tip">
+                        <div class="help-tip-title">Tip</div>
+                        All fields are optional and do not affect image analysis accuracy. Completing them is recommended for better data traceability when exporting results.
+                    </div>
+                </div>
+
+                <!-- Tab 3：Operation Steps -->
+                <div class="help-panel" id="help-operation">
+                    <div class="help-section">
+                        <h3>Single Image Measurement Steps</h3>
+                        <div class="help-steps">
+                            <div class="help-step">
+                                <div class="help-step-num">1</div>
+                                <div class="help-step-body">
+                                    <div class="help-step-title">Fill in Measurement Info (Optional)</div>
+                                    <div class="help-step-desc">Optionally fill in Location, Operator, Breed, Gender and Date in the top info form. This helps with record management.</div>
+                                </div>
+                            </div>
+                            <div class="help-step">
+                                <div class="help-step-num">2</div>
+                                <div class="help-step-body">
+                                    <div class="help-step-title">Import an Image</div>
+                                    <div class="help-step-desc">In the "Image Upload &amp; Measurement" panel, click the upload area or drag an image file into the dashed box. JPG and PNG formats are supported. A preview will appear after upload. Click "×" at the top-right to remove the image.</div>
+                                </div>
+                            </div>
+                            <div class="help-step">
+                                <div class="help-step-num">3</div>
+                                <div class="help-step-body">
+                                    <div class="help-step-title">Start Measurement</div>
+                                    <div class="help-step-desc">Click the "Start Measurement" button below the image. The button shows "Analyzing" with a spinner during processing. Each successful measurement uses 1 trial quota.</div>
+                                </div>
+                            </div>
+                            <div class="help-step">
+                                <div class="help-step-num">4</div>
+                                <div class="help-step-body">
+                                    <div class="help-step-title">View Results</div>
+                                    <div class="help-step-desc">After analysis, the result is automatically added to the "Measurement History Results" panel at the bottom of the page. Each record shows: measurement time, image thumbnails (original &amp; marked), Fat Ratio, Marbling Grade, and Fat Area. All results are sorted by time and can be scrolled.</div>
+                                </div>
+                            </div>
+                            <div class="help-step">
+                                <div class="help-step-num">5</div>
+                                <div class="help-step-body">
+                                    <div class="help-step-title">Export or Clear Results</div>
+                                    <div class="help-step-desc">Click "Export All as CSV" in the results panel header to download all historical records as a CSV file. Click "Clear All Results" to remove all records from the current session.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-section">
+                        <h3>Standard Test Images</h3>
+                        <p>The "Standard Test Images" gallery provides 6 reference images (Grade 1–6). Click "Analyze" under any test image to quickly analyze it and add the result to the history panel. This feature is useful for verifying the system's measurement accuracy.</p>
+                    </div>
+                    <div class="help-tip">
+                        <div class="help-tip-title">Performance Note</div>
+                        Image analysis runs entirely in your browser. No data is uploaded to any server. Analyzing large images may take a few seconds — please wait patiently.
+                    </div>
+                </div>
+
+                <!-- Tab 4：Trial Quota -->
+                <div class="help-panel" id="help-quota">
+                    <div class="help-section">
+                        <h3>Trial Measurement Quota</h3>
+                        <p><strong>PorkMS: Pork Marbling Measurement System</strong> provides <strong>100 free trial measurements</strong> per session. The remaining quota is shown in the banner at the top of the page.</p>
+                        <div class="help-info-card">
+                            <div class="row">
+                                <span class="key">Initial Quota</span>
+                                <span class="val"><span class="badge">100 times</span></span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Counting Rule</span>
+                                <span class="val">Only successful measurements are counted. Importing an image without clicking "Start Measurement" does not count.</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Quota Reset</span>
+                                <span class="val">Quota resets when the page is refreshed or reopened</span>
+                            </div>
+                            <div class="row">
+                                <span class="key">Exhausted</span>
+                                <span class="val">When quota reaches 0, the "Start Measurement" button is disabled. Contact the developer to continue.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-tip">
+                        <div class="help-tip-title">Contact Developer</div>
+                        If the trial quota is exhausted or you need extended access, please contact the system developer for assistance.
+                    </div>
+                </div>
+
+                <!-- Tab 5：Grade Reference -->
+                <div class="help-panel" id="help-grade">
+                    <div class="help-section">
+                        <h3>Marbling Grade Standard</h3>
+                        <p>The system divides Marbling Grade according to the detected Fat Area ratio in the muscle cross-section image, based on the following standards:</p>
+                        <table class="help-grade-table">
+                            <thead>
+                                <tr><th>Grade</th><th>Fat Area Ratio Range</th><th>Quality Description</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><span class="help-badge-grade">Grade 1</span></td><td>≤ 0.275%</td><td>No marbling, extremely low fat</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 2</span></td><td>0.275% ~ 2.284%</td><td>Trace marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 3</span></td><td>2.284% ~ 5.902%</td><td>Slight marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 4</span></td><td>5.902% ~ 8.703%</td><td>Moderate marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 5</span></td><td>8.703% ~ 12.464%</td><td>Medium marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 6</span></td><td>12.464% ~ 18.045%</td><td>Modestly abundant marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 7</span></td><td>18.045% ~ 23.508%</td><td>Abundant marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 8</span></td><td>23.508% ~ 28.232%</td><td>Highly abundant marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 9</span></td><td>28.232% ~ 33.355%</td><td>Extremely Abundant marbling</td></tr>
+                                <tr><td><span class="help-badge-grade">Grade 10+</span></td><td>&gt; 33.355%</td><td>Super Abundant marbling</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="help-section">
+                        <h3>Marked Image Guide</h3>
+                        <p>In the result thumbnails, <strong style="color:#43a047;">green highlighted areas</strong> are fat (marbling) distribution identified by the system; the background is preprocessed muscle tissue.</p>
+                    </div>
+                    <div class="help-tip">
+                        <div class="help-tip-title">Analysis Principle</div>
+                        The system uses OTSU threshold segmentation, Lab color space filtering, and connected component analysis to automatically extract valid muscle regions, identify fat particles based on block-normalized brightness distribution, and finally calculate the Fat Area ratio and determine the Grade according to the rating table.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+<script>
+// ==================== 试用次数限制 ====================
+const MAX_QUOTA = 100;
+let remainingQuota = MAX_QUOTA;
+
+function updateQuotaDisplay() {
+    const el = document.getElementById('quotaCount');
+    const banner = document.getElementById('quotaBanner');
+    const exhaustedMsg = document.getElementById('quotaExhaustedMsg');
+    el.textContent = remainingQuota;
+    if (remainingQuota <= 0) {
+        el.className = 'quota-count exhausted';
+        banner.style.display = 'none';
+        exhaustedMsg.classList.add('show');
+        document.getElementById('analyzeBtn1').disabled = true;
+        // 禁用所有测试图分析按钮
+        for (let i = 1; i <= 6; i++) {
+            const btn = document.getElementById('btnTest' + i);
+            if (btn) btn.disabled = true;
+        }
+    } else if (remainingQuota <= 20) {
+        el.className = 'quota-count warning';
+        banner.style.display = '';
+        exhaustedMsg.classList.remove('show');
+    } else {
+        el.className = 'quota-count';
+        banner.style.display = '';
+        exhaustedMsg.classList.remove('show');
+    }
+}
+
+function consumeQuota() {
+    if (remainingQuota > 0) {
+        remainingQuota--;
+        updateQuotaDisplay();
+        return true;
+    }
+    return false;
+}
+
+// ==================== 历史记录管理 ====================
+let historyRecords = [];
+let historySeq = 0;
+
+function addHistoryRecord(result, originalDataURL, imageName) {
+    historySeq++;
+    const now = new Date();
+    const timeStr = now.toLocaleString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+    const record = {
+        seq: historySeq,
+        time: timeStr,
+        imageName: imageName || ('image_' + historySeq),
+        fatAreaRatio: result.fatAreaRatio,
+        grade: result.grade,
+        fatArea: result.fatArea,
+        originalSrc: originalDataURL,
+        markedSrc: result.markedImage
+    };
+    historyRecords.unshift(record); // 最新在前
+    renderHistoryItem(record, true);
+}
+
+function renderHistoryItem(record, prepend) {
+    const body = document.getElementById('historyBody');
+    const emptyEl = document.getElementById('historyEmpty');
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.id = 'historyItem_' + record.seq;
+    item.innerHTML = `
+        <div class="history-seq">${record.seq}</div>
+        <img class="history-thumb" src="${record.originalSrc}" alt="Original">
+        <img class="history-marked-thumb" src="${record.markedSrc}" alt="Marked">
+        <div class="history-info">
+            <div class="history-time">${record.time}${record.imageName ? ' &nbsp;|&nbsp; ' + record.imageName : ''}</div>
+            <div class="history-stats">
+                <div class="history-stat">
+                    <div class="history-stat-label">Fat Ratio</div>
+                    <div class="history-stat-value">${record.fatAreaRatio.toFixed(2)}%</div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Marbling Grade</div>
+                    <div class="history-stat-value"><span class="grade-val">${record.grade}</span></div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Fat Area (px)</div>
+                    <div class="history-stat-value">${record.fatArea}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    if (prepend && body.firstChild && body.firstChild !== emptyEl) {
+        body.insertBefore(item, body.firstChild);
+    } else if (prepend) {
+        body.appendChild(item);
+    } else {
+        body.appendChild(item);
+    }
+}
+
+function clearAllHistory() {
+    if (historyRecords.length === 0) { alert('No records to clear.'); return; }
+    if (!confirm('Clear all measurement history? This cannot be undone.')) return;
+    historyRecords = [];
+    historySeq = 0;
+    const body = document.getElementById('historyBody');
+    body.innerHTML = '<div class="history-empty" id="historyEmpty"><div class="history-empty-icon">&#9633;</div><div>No measurement records yet. Import an image and start measuring.</div></div>';
+}
+
+function exportAllResults() {
+    if (historyRecords.length === 0) { alert('No records to export.'); return; }
+    const headers = ['No.', 'Time', 'Image Name', 'Fat Ratio(%)', 'Marbling Grade', 'Fat Area (px)',
+                     'Location', 'Operator', 'Breed', 'Gender', 'Date'];
+    const location = document.getElementById('location').value || '';
+    const operator = document.getElementById('operator').value || '';
+    const breed = document.getElementById('breed').value || '';
+    const gender = document.getElementById('gender').value || '';
+    const testDate = document.getElementById('testDate').value || '';
+
+    const rows = historyRecords.map(r => [
+        r.seq, r.time, r.imageName,
+        r.fatAreaRatio.toFixed(2), r.grade, r.fatArea,
+        location, operator, breed, gender, testDate
+    ]);
+
+    const csvContent = [headers, ...rows]
+        .map(row => row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))
+        .join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'PorkMS_results_' + (testDate || new Date().toISOString().split('T')[0]) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ==================== Help Modal ====================
+function openHelp() { document.getElementById('helpModal').classList.add('show'); }
+function closeHelp() { document.getElementById('helpModal').classList.remove('show'); }
+function closeHelpOutside(e) { if (e.target === document.getElementById('helpModal')) closeHelp(); }
+
+function switchHelp(panelId, btn) {
+    document.querySelectorAll('.help-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.help-nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('help-' + panelId).classList.add('active');
+    btn.classList.add('active');
+}
+
+// ==================== 图像Analyze算法 ====================
+let currentImageData = null;
+let currentFileName = '';
+
+function grayscale(data) {
+    const g = new Uint8Array(data.length / 4);
+    for (let i = 0; i < data.length; i += 4)
+        g[i/4] = Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2]);
+    return g;
+}
+
+function toColorImageData(rgb, w, h) {
+    const d = new Uint8ClampedArray(w * h * 4);
+    d.set(rgb);
+    return new ImageData(d, w, h);
+}
+
+function otsuThreshold(gray) {
+    const hist = new Array(256).fill(0);
+    for (let v of gray) hist[Math.round(v)]++;
+    const total = gray.length;
+    let sum = 0;
+    for (let i = 0; i < 256; i++) sum += i * hist[i];
+    let sumB = 0, wB = 0, maxVar = 0, threshold = 0;
+    for (let t = 0; t < 256; t++) {
+        wB += hist[t]; if (wB === 0) continue;
+        const wF = total - wB; if (wF === 0) break;
+        sumB += t * hist[t];
+        const mB = sumB / wB, mF = (sum - sumB) / wF;
+        const v = wB * wF * (mB - mF) * (mB - mF);
+        if (v > maxVar) { maxVar = v; threshold = t; }
+    }
+    return threshold;
+}
+
+function findLargestComponent(mask, w, h) {
+    const visited = new Uint8Array(w * h), labels = new Int32Array(w * h), queue = [];
+    let label = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        if (visited[idx] || !mask[idx]) continue;
+        label++; queue.push([x, y]);
+        while (queue.length) {
+            const [cx, cy] = queue.shift();
+            const i = cy * w + cx;
+            if (cx<0||cx>=w||cy<0||cy>=h||visited[i]||!mask[i]) continue;
+            visited[i] = 1; labels[i] = label;
+            queue.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+        }
+    }
+    const areas = new Array(label + 1).fill(0);
+    for (let v of labels) if (v > 0) areas[v]++;
+    let maxArea = 0, maxLabel = 0;
+    for (let i = 1; i <= label; i++) if (areas[i] > maxArea) { maxArea = areas[i]; maxLabel = i; }
+    const result = new Uint8Array(w * h);
+    for (let i = 0; i < labels.length; i++) result[i] = labels[i] === maxLabel ? 1 : 0;
+    return { mask: result, area: maxArea };
+}
+
+function erode(mask, w, h, r) {
+    const result = new Uint8Array(w * h);
+    for (let y = r; y < h - r; y++) for (let x = r; x < w - r; x++) {
+        let ok = true;
+        for (let dy = -r; dy <= r && ok; dy++) for (let dx = -r; dx <= r; dx++)
+            if (Math.sqrt(dx*dx+dy*dy) <= r && !mask[(y+dy)*w+(x+dx)]) ok = false;
+        result[y*w+x] = ok ? 1 : 0;
+    }
+    return result;
+}
+
+function removeBorder(mask, w, h, bw) {
+    const result = new Uint8Array(mask);
+    for (let y = 0; y < h; y++) {
+        let first = -1, last = -1;
+        for (let x = 0; x < w; x++) { if (mask[y*w+x]) { if(first<0) first=x; last=x; } }
+        if (first >= 0 && last > first) {
+            for (let x = first; x < Math.min(first+bw, last+1); x++) result[y*w+x] = 0;
+            for (let x = Math.max(last-bw+1, first); x <= last; x++) result[y*w+x] = 0;
+        }
+    }
+    for (let x = 0; x < w; x++) {
+        let first = -1, last = -1;
+        for (let y = 0; y < h; y++) { if (mask[y*w+x]) { if(first<0) first=y; last=y; } }
+        if (first >= 0 && last > first) {
+            for (let y = first; y < Math.min(first+bw, last+1); y++) result[y*w+x] = 0;
+            for (let y = Math.max(last-bw+1, first); y <= last; y++) result[y*w+x] = 0;
+        }
+    }
+    return result;
+}
+
+function resizeNearest(src, sW, sH, dW, dH) {
+    const result = new Uint8Array(dW * dH);
+    for (let y = 0; y < dH; y++) for (let x = 0; x < dW; x++) {
+        const sx = Math.min(Math.floor(x * sW / dW), sW - 1);
+        const sy = Math.min(Math.floor(y * sH / dH), sH - 1);
+        result[y * dW + x] = src[sy * sW + sx];
+    }
+    return result;
+}
+
+function rgbToLab(r, g, b) {
+    let rr = r/255, gg = g/255, bb = b/255;
+    rr = rr>0.04045 ? Math.pow((rr+0.055)/1.055,2.4) : rr/12.92;
+    gg = gg>0.04045 ? Math.pow((gg+0.055)/1.055,2.4) : gg/12.92;
+    bb = bb>0.04045 ? Math.pow((bb+0.055)/1.055,2.4) : bb/12.92;
+    const x = (rr*0.4124564 + gg*0.3575761 + bb*0.1804375) * 100;
+    const y = (rr*0.2126729 + gg*0.7151522 + bb*0.0721750) * 100;
+    const z = (rr*0.0193339 + gg*0.1191920 + bb*0.9503041) * 100;
+    const xn = x/95.047, yn = y/100, zn = z/108.883;
+    const fx = xn>0.008856 ? Math.pow(xn,1/3) : 7.787*xn+16/116;
+    const fy = yn>0.008856 ? Math.pow(yn,1/3) : 7.787*yn+16/116;
+    const fz = zn>0.008856 ? Math.pow(zn,1/3) : 7.787*zn+16/116;
+    return { L: 116*fy-16, a: 500*(fx-fy), b: 200*(fy-fz) };
+}
+
+function analyzeImageCore(originalData, width, height) {
+    let scaleFactor = 0.2;
+    if (Math.max(width, height) < 1000) scaleFactor = 0.5;
+    if (Math.max(width, height) > 4000) scaleFactor = 0.08;
+    const sW = Math.round(width * scaleFactor), sH = Math.round(height * scaleFactor);
+
+    const gray = grayscale(originalData);
+    const sGray = new Uint8Array(sW * sH);
+    for (let y = 0; y < sH; y++) for (let x = 0; x < sW; x++)
+        sGray[y*sW+x] = gray[Math.floor(y/scaleFactor)*width + Math.floor(x/scaleFactor)];
+    const th = otsuThreshold(sGray);
+    const otsuMask = new Uint8Array(sW * sH);
+    for (let i = 0; i < sGray.length; i++) otsuMask[i] = sGray[i] > th ? 1 : 0;
+    const imageA = findLargestComponent(otsuMask, sW, sH).mask;
+    const invA = new Uint8Array(imageA.length);
+    for (let i = 0; i < imageA.length; i++) invA[i] = 1 - imageA[i];
+    const imageB = findLargestComponent(invA, sW, sH);
+    let imageC = new Uint8Array(imageB.mask.length);
+    for (let i = 0; i < imageB.mask.length; i++) imageC[i] = 1 - imageB.mask[i];
+
+    const smallImg = new Uint8ClampedArray(sW * sH * 4);
+    for (let y = 0; y < sH; y++) for (let x = 0; x < sW; x++) {
+        const sx = Math.floor(x/scaleFactor), sy = Math.floor(y/scaleFactor);
+        const si = (sy*width+sx)*4, di = (y*sW+x)*4;
+        smallImg[di]=originalData[si]; smallImg[di+1]=originalData[si+1];
+        smallImg[di+2]=originalData[si+2]; smallImg[di+3]=255;
+    }
+
+    let imageM = new Uint8ClampedArray(sW * sH * 4);
+    for (let i = 0; i < imageC.length; i++) {
+        const pi = i*4;
+        if (imageC[i]) { imageM[pi]=smallImg[pi]; imageM[pi+1]=smallImg[pi+1]; imageM[pi+2]=smallImg[pi+2]; }
+        imageM[pi+3]=255;
+    }
+
+    let imageL = new Uint8ClampedArray(sW * sH * 4);
+    for (let i = 0; i < sW*sH; i++) {
+        const pi = i*4, r=imageM[pi], g=imageM[pi+1], b=imageM[pi+2];
+        if (!r && !g && !b) continue;
+        const lab = rgbToLab(r, g, b);
+        const isLight = (lab.a<10 && lab.b<10 && lab.L>60) || (lab.a<5 && lab.b<5);
+        if (!isLight) { imageL[pi]=r; imageL[pi+1]=g; imageL[pi+2]=b; }
+        imageL[pi+3]=255;
+    }
+
+    const grayL = new Uint8Array(sW * sH);
+    for (let i = 0; i < sW*sH; i++) { const pi=i*4; grayL[i]=Math.round(0.299*imageL[pi]+0.587*imageL[pi+1]+0.114*imageL[pi+2]); }
+    const h1 = new Uint8Array(sW * sH);
+    for (let i = 0; i < grayL.length; i++) h1[i] = grayL[i] > 0 ? 1 : 0;
+    const se = Math.max(1, Math.round(2 * scaleFactor));
+    const h2 = erode(h1, sW, sH, se);
+    const h3 = findLargestComponent(h2, sW, sH).mask;
+    const i1 = new Uint8Array(h3.length); for (let i=0;i<h3.length;i++) i1[i]=1-h3[i];
+    const j = findLargestComponent(i1, sW, sH).mask;
+    let imageJ1 = new Uint8Array(j.length); for (let i=0;i<j.length;i++) imageJ1[i]=1-j[i];
+    const bw = Math.round(60 * scaleFactor);
+    let imageJ2 = removeBorder(imageJ1, sW, sH, bw);
+
+    const imageCFull = resizeNearest(imageC, sW, sH, width, height);
+    const imgMFull = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < width*height; i++) {
+        const pi = i*4;
+        if (imageCFull[i]) { imgMFull[pi]=originalData[pi]; imgMFull[pi+1]=originalData[pi+1]; imgMFull[pi+2]=originalData[pi+2]; }
+        imgMFull[pi+3]=255;
+    }
+    const j2Full = resizeNearest(imageJ2, sW, sH, width, height);
+    let imageX = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < width*height; i++) {
+        const pi = i*4;
+        if (j2Full[i]) { imageX[pi]=imgMFull[pi]; imageX[pi+1]=imgMFull[pi+1]; imageX[pi+2]=imgMFull[pi+2]; }
+        imageX[pi+3]=255;
+    }
+
+    const blueChannel = new Uint8Array(width * height);
+    let gmin = 255, gmax = 0;
+    for (let i = 0; i < width*height; i++) {
+        const pi = i*4;
+        if (imageX[pi]||imageX[pi+1]||imageX[pi+2]) {
+            blueChannel[i] = imageX[pi+2];
+            if (blueChannel[i] > 0) {
+                if (blueChannel[i] < gmin) gmin = blueChannel[i];
+                if (blueChannel[i] > gmax) gmax = blueChannel[i];
+            }
+        }
+    }
+    const range = gmax - gmin + 1;
+    const normalizedGray = new Float32Array(width * height);
+    for (let i = 0; i < blueChannel.length; i++)
+        if (blueChannel[i] > 0) normalizedGray[i] = (blueChannel[i] - gmin + 1) / range;
+
+    const counts = {}; let maxCount = 0, I_mode = 0;
+    for (let i = 0; i < normalizedGray.length; i++) {
+        if (normalizedGray[i] > 0) {
+            const key = Math.round(normalizedGray[i] * 1000) / 1000;
+            counts[key] = (counts[key] || 0) + 1;
+            if (counts[key] > maxCount) { maxCount = counts[key]; I_mode = key; }
+        }
+    }
+
+    const blockSize = 350;
+    const M = Math.floor(height / blockSize), N = Math.floor(width / blockSize);
+    const blockInfo = [];
+    for (let i = 0; i < M; i++) for (let j = 0; j < N; j++) {
+        const sy = i*blockSize, sx = j*blockSize;
+        const cnt = {}, mv = { mode: 0, count: 0, max: 0 };
+        for (let y = 0; y < blockSize; y++) for (let x = 0; x < blockSize; x++) {
+            const idx = (sy+y)*width + (sx+x);
+            const val = normalizedGray[idx];
+            if (val > 0) {
+                if (val > mv.max) mv.max = val;
+                const key = Math.round(val * 1000) / 1000;
+                cnt[key] = (cnt[key] || 0) + 1;
+                if (cnt[key] > mv.count) { mv.count = cnt[key]; mv.mode = key; }
+            }
+        }
+        let level = mv.mode + mv.max * (I_mode / (mv.mode * 7));
+        if (level > 1) level = 1;
+        blockInfo.push({ i, j, level });
+    }
+
+    let sample = new Uint8Array(width * height);
+    let blockIdx = 0;
+    for (let i = 0; i < M; i++) for (let j = 0; j < N; j++) {
+        const sy = i*blockSize, sx = j*blockSize;
+        const level = blockInfo[blockIdx++].level;
+        for (let y = 0; y < blockSize; y++) for (let x = 0; x < blockSize; x++) {
+            const idx = (sy+y)*width + (sx+x);
+            sample[idx] = (normalizedGray[idx] > level) ? 1 : 0;
+        }
+    }
+
+    const vis2 = new Uint8Array(width * height), lbl2 = new Int32Array(width * height), q2 = [];
+    let lbl = 0;
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+        const idx = y*width+x;
+        if (vis2[idx] || !sample[idx]) continue;
+        lbl++; q2.push([x,y]);
+        while (q2.length) {
+            const [cx,cy] = q2.shift();
+            const i = cy*width+cx;
+            if (cx<0||cx>=width||cy<0||cy>=height||vis2[i]||!sample[i]) continue;
+            vis2[i]=1; lbl2[i]=lbl;
+            q2.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+        }
+    }
+    const areas2 = new Array(lbl+1).fill(0);
+    for (let v of lbl2) if (v>0) areas2[v]++;
+
+    let fatArea = 0;
+    for (let i = 0; i < lbl2.length; i++) {
+        if (lbl2[i] > 0 && areas2[lbl2[i]] >= 30) { sample[i] = 1; fatArea++; } else sample[i] = 0;
+    }
+
+    const targetArea = imageX.filter((v,i)=>i%4===0&&v>0).length;
+    const fatAreaRatio = fatArea / targetArea;
+
+    let grade;
+    if (fatAreaRatio <= 0.00275) grade = 'Grade 1';
+    else if (fatAreaRatio <= 0.02284) grade = 'Grade 2';
+    else if (fatAreaRatio <= 0.05902) grade = 'Grade 3';
+    else if (fatAreaRatio <= 0.08703) grade = 'Grade 4';
+    else if (fatAreaRatio <= 0.12464) grade = 'Grade 5';
+    else if (fatAreaRatio <= 0.18045) grade = 'Grade 6';
+    else if (fatAreaRatio <= 0.23508) grade = 'Grade 7';
+    else if (fatAreaRatio <= 0.28232) grade = 'Grade 8';
+    else if (fatAreaRatio <= 0.33355) grade = 'Grade 9';
+    else grade = 'Grade 10+';
+
+    const markedImage = new Uint8ClampedArray(imageX);
+    for (let i = 0; i < width*height; i++) {
+        if (sample[i]) { const pi=i*4; markedImage[pi]=0; markedImage[pi+1]=255; markedImage[pi+2]=0; }
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    canvas.getContext('2d').putImageData(toColorImageData(markedImage, width, height), 0, 0);
+
+    return { fatAreaRatio: fatAreaRatio * 100, grade, fatArea, markedImage: canvas.toDataURL('image/png') };
+}
+
+// ==================== 单张图片上传交互 ====================
+window.onload = function() {
+    document.getElementById('testDate').value = new Date().toISOString().split('T')[0];
+    initDropZone();
+    initBatchDrop();
+    updateQuotaDisplay();
+};
+
+function initDropZone() {
+    const dropZone = document.getElementById('dropZone1');
+    const fileInput = document.getElementById('fileInput1');
+    fileInput.addEventListener('change', function() {
+        if (this.files[0]) loadImage(this.files[0]);
+    });
+    dropZone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', function() { this.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
+    });
+}
+
+function loadImage(file) {
+    currentFileName = file.name || '';
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width; canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            currentImageData = canvas.getContext('2d').getImageData(0, 0, img.width, img.height);
+            const dropZone = document.getElementById('dropZone1');
+            dropZone.innerHTML = '<img src="' + e.target.result + '" class="preview-img" alt="preview"><button class="remove-btn" onclick="removeImage(event)">×</button>';
+            dropZone.classList.add('has-image');
+            const btn = document.getElementById('analyzeBtn1');
+            if (remainingQuota > 0) btn.disabled = false;
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeImage(event) {
+    if (event) event.stopPropagation();
+    const dropZone = document.getElementById('dropZone1');
+    dropZone.innerHTML = '<div class="drop-zone-icon">+</div><div class="drop-zone-text">Click or drag to upload</div><div class="drop-zone-hint">JPG/PNG supported</div><button class="remove-btn" onclick="removeImage(event)">×</button>';
+    dropZone.classList.remove('has-image');
+    document.getElementById('fileInput1').value = '';
+    document.getElementById('analyzeBtn1').disabled = true;
+    currentImageData = null;
+    currentFileName = '';
+}
+
+function setAnalyzeLoading(loading) {
+    const btn = document.getElementById('analyzeBtn1');
+    if (loading) {
+        btn.classList.add('loading');
+        btn.innerHTML = '<span class="spinner"></span>Analyzing...';
+        btn.disabled = true;
+    } else {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<span class="spinner"></span>Start Measurement';
+        btn.disabled = (currentImageData === null || remainingQuota <= 0);
+    }
+}
+
+async function analyzeImage() {
+    if (!currentImageData) return;
+    if (remainingQuota <= 0) { alert('Trial limit reached. Please contact the developer.'); return; }
+
+    setAnalyzeLoading(true);
+    await new Promise(r => setTimeout(r, 50));
+
+    try {
+        const result = analyzeImageCore(currentImageData.data, currentImageData.width, currentImageData.height);
+        // 获取原图DataURL用于历史记录缩略图
+        const oc = document.createElement('canvas');
+        oc.width = currentImageData.width; oc.height = currentImageData.height;
+        oc.getContext('2d').putImageData(currentImageData, 0, 0);
+        const originalDataURL = oc.toDataURL('image/png');
+
+        // 消耗次数（仅成功后）
+        consumeQuota();
+
+        // 添加到历史记录
+        addHistoryRecord(result, originalDataURL, currentFileName);
+
+    } catch(err) {
+        alert('Image analysis failed. Please try again with a different image.');
+        console.error(err);
+    }
+
+    setAnalyzeLoading(false);
+}
+
+// ==================== 测试图快速分析 ====================
+const testImageCache = {};
+
+function setTestLoading(index, loading) {
+    const btn = document.getElementById('btnTest' + index);
+    if (!btn) return;
+    if (loading) {
+        btn.classList.add('loading');
+        btn.innerHTML = '<span class="spinner"></span>Analyzing';
+        btn.disabled = true;
+    } else {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<span class="spinner"></span>Analyze';
+        btn.disabled = remainingQuota <= 0;
+    }
+}
+
+async function analyzeTestImage(index) {
+    if (remainingQuota <= 0) { alert('Trial limit reached. Please contact the developer.'); return; }
+    const btn = document.getElementById('btnTest' + index);
+    if (!btn) return;
+
+    if (!testImageCache[index]) {
+        setTestLoading(index, true);
+        try {
+            const imgElement = document.getElementById('testImg' + index);
+            if (!imgElement) { alert('Test image element not found'); setTestLoading(index, false); return; }
+            if (!imgElement.complete || imgElement.naturalWidth === 0) {
+                await new Promise((resolve, reject) => {
+                    imgElement.onload = resolve; imgElement.onerror = reject;
+                    if (imgElement.complete && imgElement.naturalWidth > 0) resolve();
+                });
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = imgElement.naturalWidth; canvas.height = imgElement.naturalHeight;
+            canvas.getContext('2d').drawImage(imgElement, 0, 0);
+            testImageCache[index] = { imgData: canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height), dataURL: canvas.toDataURL('image/png') };
+        } catch(err) {
+            alert('Failed to load test image ' + index + '. Please ensure the image is properly loaded.');
+            setTestLoading(index, false); return;
+        }
+    }
+
+    setTestLoading(index, true);
+    await new Promise(r => setTimeout(r, 50));
+
+    try {
+        const cached = testImageCache[index];
+        const result = analyzeImageCore(cached.imgData.data, cached.imgData.width, cached.imgData.height);
+        consumeQuota();
+        addHistoryRecord(result, cached.dataURL, 'test_grade' + index + '.jpeg');
+
+        btn.innerHTML = '&#10003; Done';
+        btn.style.background = 'linear-gradient(135deg, #43A047 0%, #66BB6A 100%)';
+        setTimeout(() => {
+            btn.innerHTML = '<span class="spinner"></span>Analyze';
+            btn.style.background = '';
+            setTestLoading(index, false);
+        }, 1500);
+    } catch(err) {
+        alert('Analysis of test image ' + index + ' failed');
+        setTestLoading(index, false);
+    }
+}
+
+// ==================== 批量拖放区域初始化（保留兼容性）====================
+function initBatchDrop() { /* reserved for compatibility */ }
+</script>
+</body>
+</html>
