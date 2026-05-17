@@ -1699,26 +1699,8 @@ async function analyzeImage() {
     setAnalyzeLoading(false);
 }
 
-// ==================== GitHub 高清原图加载 ====================
-// 注意：测试图片使用公开的 raw.githubusercontent.com 链接，无需Token
-const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/yuwan589/PorkMS/main/images';
-
-async function loadHighResImageFromGitHub(index) {
-    const url = `${GITHUB_RAW_BASE}/test_${index}.jpeg`;
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to load image`);
-    }
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-    });
-}
-
 // ==================== 测试图快速分析 ====================
+// 注意：所有测试图片已直接嵌入HTML，无需网络加载
 const testImageCache = {};
 
 function setTestLoading(index, loading) {
@@ -1730,7 +1712,7 @@ function setTestLoading(index, loading) {
         btn.disabled = true;
     } else {
         btn.classList.remove('loading');
-        btn.innerHTML = '<span class="spinner"></span>Analyze';
+        btn.innerHTML = 'Analyze';
         btn.disabled = remainingQuota <= 0;
     }
 }
@@ -1740,44 +1722,20 @@ async function analyzeTestImage(index) {
     const btn = document.getElementById('btnTest' + index);
     if (!btn) return;
 
-    // 加载图片：优先从GitHub加载高清图，失败则使用页面缩略图
+    // 直接使用页面上嵌入的图片
     if (!testImageCache[index]) {
         setTestLoading(index, true);
-        let dataURL = null;
-        
-        // 方案1：尝试从GitHub加载高清图
         try {
-            dataURL = await loadHighResImageFromGitHub(index);
-        } catch(err) {
-            console.log('GitHub加载失败，使用备用缩略图:', err.message);
-        }
-        
-        // 方案2：使用页面上的缩略图作为备用
-        if (!dataURL) {
-            try {
-                const thumbImg = document.querySelector(`.test-image-item[data-grade="${index}"] img`);
-                if (thumbImg) {
-                    dataURL = thumbImg.src;
-                }
-            } catch(err) {
-                console.log('缩略图获取失败:', err.message);
-            }
-        }
-        
-        if (!dataURL) {
-            alert('无法加载图片，请检查网络连接后重试。\n(Network error - please check your connection)');
-            setTestLoading(index, false);
-            return;
-        }
-        
-        try {
+            const thumbImg = document.querySelector(`.test-image-item[data-grade="${index}"] img`);
+            if (!thumbImg) throw new Error('Image element not found');
+            
             const img = new Image();
-            img.crossOrigin = 'anonymous'; // 允许跨域
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
                 img.onerror = () => reject(new Error('Image load failed'));
-                img.src = dataURL;
+                img.src = thumbImg.src;
             });
+            
             const canvas = document.createElement('canvas');
             canvas.width = img.naturalWidth;
             canvas.height = img.naturalHeight;
@@ -1802,7 +1760,7 @@ async function analyzeTestImage(index) {
         consumeQuota();
         addHistoryRecord(result, cached.dataURL, 'test_grade' + index + '.jpeg');
 
-        btn.innerHTML = '&#10003; Done';
+        btn.innerHTML = '✓ Done';
         btn.style.background = 'linear-gradient(135deg, #43A047 0%, #66BB6A 100%)';
         setTimeout(() => {
             btn.innerHTML = 'Analyze';
