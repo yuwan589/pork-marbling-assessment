@@ -1038,7 +1038,7 @@
                                 <div class="help-step-num">4</div>
                                 <div class="help-step-body">
                                     <div class="help-step-title">View Results</div>
-                                    <div class="help-step-desc">After analysis, the result is automatically added to the "Measurement History Results" panel at the bottom of the page. Each record shows: measurement time, image thumbnails (original &amp; marked), Fat Ratio, Marbling Grade, and Fat Area. All results are sorted by time and can be scrolled.</div>
+                                    <div class="help-step-desc">After analysis, the result is automatically added to the "Measurement History Results" panel at the bottom of the page. Each record shows: measurement time, image thumbnails (original &amp; marked), Fat Ratio and Marbling Grade. All results are sorted by time and can be scrolled.</div>
                                 </div>
                             </div>
                             <div class="help-step">
@@ -1094,7 +1094,7 @@
                 <div class="help-panel" id="help-grade">
                     <div class="help-section">
                         <h3>Marbling Grade Standard</h3>
-                        <p>The system divides Marbling Grade according to the detected Fat Area ratio in the muscle cross-section image, based on the following standards:</p>
+                        <p>The system divides Marbling Grade according to the detected fat ratio in the muscle cross-section image, based on the following standards:</p>
                         <table class="help-grade-table">
                             <thead>
                                 <tr><th>Grade</th><th>Fat Area Ratio Range</th><th>Quality Description</th></tr>
@@ -1119,7 +1119,7 @@
                     </div>
                     <div class="help-tip">
                         <div class="help-tip-title">Analysis Principle</div>
-                        The system uses OTSU threshold segmentation, Lab color space filtering, and connected component analysis to automatically extract valid muscle regions, identify fat particles based on block-normalized brightness distribution, and finally calculate the Fat Area ratio and determine the Grade according to the rating table.
+                        The system uses OTSU threshold segmentation, Lab color space filtering, and connected component analysis to automatically extract valid muscle regions, identify fat particles based on block-normalized brightness distribution, and finally calculate the fat ratio and determine the Grade according to the rating table.
                     </div>
                 </div>
 
@@ -1133,6 +1133,30 @@ const MAX_QUOTA = 100;
 let remainingQuota = MAX_QUOTA;
 
 function updateQuotaDisplay() {
+    const el = document.getElementById('quotaCount');
+    const banner = document.getElementById('quotaBanner');
+    const exhaustedMsg = document.getElementById('quotaExhaustedMsg');
+    el.textContent = remainingQuota;
+    if (remainingQuota <= 0) {
+        el.className = 'quota-count exhausted';
+        banner.style.display = 'none';
+        exhaustedMsg.classList.add('show');
+        document.getElementById('analyzeBtn1').disabled = true;
+        for (let i = 1; i <= 6; i++) {
+            const btn = document.getElementById('btnTest' + i);
+            if (btn) btn.disabled = true;
+        }
+    } else {
+        el.className = 'quota-count';
+        banner.style.display = '';
+        exhaustedMsg.classList.remove('show');
+        document.getElementById('analyzeBtn1').disabled = false;
+        for (let i = 1; i <= 6; i++) {
+            const btn = document.getElementById('btnTest' + i);
+            if (btn) btn.disabled = false;
+        }
+    }
+}ateQuotaDisplay() {
     const el = document.getElementById('quotaCount');
     const banner = document.getElementById('quotaBanner');
     const exhaustedMsg = document.getElementById('quotaExhaustedMsg');
@@ -1693,6 +1717,7 @@ async function analyzeTestImage(index) {
     const btn = document.getElementById('btnTest' + index);
     if (!btn) return;
 
+    // If not cached, load and cache the image
     if (!testImageCache[index]) {
         setTestLoading(index, true);
         try {
@@ -1700,23 +1725,29 @@ async function analyzeTestImage(index) {
             if (!imgElement) { alert('Test image element not found'); setTestLoading(index, false); return; }
             if (!imgElement.complete || imgElement.naturalWidth === 0) {
                 await new Promise((resolve, reject) => {
-                    imgElement.onload = resolve; imgElement.onerror = reject;
+                    imgElement.onload = resolve;
+                    imgElement.onerror = reject;
                     if (imgElement.complete && imgElement.naturalWidth > 0) resolve();
                 });
             }
             const canvas = document.createElement('canvas');
-            canvas.width = imgElement.naturalWidth; canvas.height = imgElement.naturalHeight;
+            canvas.width = imgElement.naturalWidth;
+            canvas.height = imgElement.naturalHeight;
             canvas.getContext('2d').drawImage(imgElement, 0, 0);
-            testImageCache[index] = { imgData: canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height), dataURL: canvas.toDataURL('image/png') };
+            testImageCache[index] = {
+                imgData: canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height),
+                dataURL: canvas.toDataURL('image/png')
+            };
+            setTestLoading(index, false);  // Done loading, ready to analyze
         } catch(err) {
             alert('Failed to load test image ' + index + '. Please ensure the image is properly loaded.');
-            setTestLoading(index, false); return;
+            setTestLoading(index, false);
+            return;
         }
     }
 
+    // Now do the analysis
     setTestLoading(index, true);
-    await new Promise(r => setTimeout(r, 50));
-
     try {
         const cached = testImageCache[index];
         const result = analyzeImageCore(cached.imgData.data, cached.imgData.width, cached.imgData.height);
@@ -1726,12 +1757,12 @@ async function analyzeTestImage(index) {
         btn.innerHTML = '&#10003; Done';
         btn.style.background = 'linear-gradient(135deg, #43A047 0%, #66BB6A 100%)';
         setTimeout(() => {
-            btn.innerHTML = '<span class="spinner"></span>Analyze';
+            btn.innerHTML = 'Analyze';
             btn.style.background = '';
-            btn.disabled = false;
+            setTestLoading(index, false);
         }, 1500);
     } catch(err) {
-        alert('Analysis of test image ' + index + ' failed');
+        alert('Analysis of test image ' + index + ' failed: ' + err.message);
         setTestLoading(index, false);
     }
 }
