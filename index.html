@@ -1740,15 +1740,42 @@ async function analyzeTestImage(index) {
     const btn = document.getElementById('btnTest' + index);
     if (!btn) return;
 
-    // If not cached, load high-res image from GitHub
+    // 加载图片：优先从GitHub加载高清图，失败则使用页面缩略图
     if (!testImageCache[index]) {
         setTestLoading(index, true);
+        let dataURL = null;
+        
+        // 方案1：尝试从GitHub加载高清图
         try {
-            const dataURL = await loadHighResImageFromGitHub(index);
+            dataURL = await loadHighResImageFromGitHub(index);
+        } catch(err) {
+            console.log('GitHub加载失败，使用备用缩略图:', err.message);
+        }
+        
+        // 方案2：使用页面上的缩略图作为备用
+        if (!dataURL) {
+            try {
+                const thumbImg = document.querySelector(`.test-image-item[data-grade="${index}"] img`);
+                if (thumbImg) {
+                    dataURL = thumbImg.src;
+                }
+            } catch(err) {
+                console.log('缩略图获取失败:', err.message);
+            }
+        }
+        
+        if (!dataURL) {
+            alert('无法加载图片，请检查网络连接后重试。\n(Network error - please check your connection)');
+            setTestLoading(index, false);
+            return;
+        }
+        
+        try {
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // 允许跨域
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
-                img.onerror = reject;
+                img.onerror = () => reject(new Error('Image load failed'));
                 img.src = dataURL;
             });
             const canvas = document.createElement('canvas');
@@ -1757,17 +1784,17 @@ async function analyzeTestImage(index) {
             canvas.getContext('2d').drawImage(img, 0, 0);
             testImageCache[index] = {
                 imgData: canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height),
-                dataURL: dataURL
+                dataURL: canvas.toDataURL('image/png')
             };
-            setTestLoading(index, false);
         } catch(err) {
-            alert('Failed to load test image ' + index + ' from GitHub: ' + err.message);
+            alert('图片处理失败: ' + err.message);
             setTestLoading(index, false);
             return;
         }
+        setTestLoading(index, false);
     }
 
-    // Now do the analysis
+    // 执行分析
     setTestLoading(index, true);
     try {
         const cached = testImageCache[index];
