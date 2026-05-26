@@ -1231,10 +1231,6 @@ function renderHistoryItem(record, prepend) {
                 <div class="history-metric-label">Marbling Grade</div>
                 <div class="history-metric-value"><span class="grade-badge">${record.grade}</span></div>
             </div>
-            <div class="history-metric">
-                <div class="history-metric-label">Fat Area</div>
-                <div class="history-metric-value">${record.fatArea || 0} px</div>
-            </div>
         </div>
         <div class="history-images-row">
             <div class="history-image-box">
@@ -1261,7 +1257,7 @@ function renderHistoryItem(record, prepend) {
 function exportSingleResult(seq) {
     const record = historyRecords.find(r => r.seq === seq);
     if (!record) return;
-    const headers = ['No.', 'Time', 'Image Name', 'Fat Ratio(%)', 'Marbling Grade', 'Fat Area(px)',
+    const headers = ['No.', 'Time', 'Image Name', 'Fat Ratio(%)', 'Marbling Grade',
                      'Location', 'Operator', 'Breed', 'Gender', 'Date'];
     const location = document.getElementById('location').value || '';
     const operator = document.getElementById('operator').value || '';
@@ -1269,7 +1265,7 @@ function exportSingleResult(seq) {
     const gender = document.getElementById('gender').value || '';
     const testDate = document.getElementById('testDate').value || '';
     const rows = [[record.seq, record.time, record.imageName || '',
-                   record.fatAreaRatio.toFixed(2), record.grade, record.fatArea || 0,
+                   record.fatAreaRatio.toFixed(2), record.grade,
                    location, operator, breed, gender, testDate]];
     let csv = '\uFEFF' + headers.join(',') + '\n';
     rows.forEach(row => {
@@ -1307,7 +1303,7 @@ function exportAllResults() {
 
     const rows = historyRecords.map(r => [
         r.seq, r.time, r.imageName,
-        r.fatAreaRatio.toFixed(2), r.grade, r.fatArea,
+        r.fatAreaRatio.toFixed(2), r.grade,
         location, operator, breed, gender, testDate
     ]);
 
