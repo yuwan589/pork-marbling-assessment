@@ -1728,7 +1728,7 @@ async function analyzeImage() {
 }
 
 // ==================== 测试图快速分析 ====================
-// 注意：所有测试图片已直接嵌入HTML，无需网络加载
+// Test images are loaded from external files (images/gradeX.jpg)
 const testImageCache = {};
 
 function setTestLoading(index, loading) {
@@ -1745,7 +1745,7 @@ function setTestLoading(index, loading) {
     }
 }
 
-async async function analyzeTestImage(index) {
+async function analyzeTestImage(index) {
     if (remainingQuota <= 0) { alert('Trial limit reached. Please contact the developer.'); return; }
     const btn = document.getElementById('btnTest' + index);
     if (!btn) return;
@@ -1784,7 +1784,7 @@ async async function analyzeTestImage(index) {
         const cached = testImageCache[index];
         const result = analyzeImageCore(cached.imgData.data, cached.imgData.width, cached.imgData.height);
         consumeQuota();
-        addHistoryRecord(result, cached.dataURL, 'test_grade' + index + '.jpeg');
+        addHistoryRecord(result, cached.dataURL, 'test_grade' + index + '.jpg');
 
         btn.innerHTML = '✓ Done';
         btn.style.background = 'linear-gradient(135deg, #43A047 0%, #66BB6A 100%)';
