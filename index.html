@@ -1451,9 +1451,9 @@ function rgbToLab(r, g, b) {
 }
 
 function analyzeImageCore(originalData, width, height) {
-    let scaleFactor = 1.0;
-    if (Math.max(width, height) > 2000) scaleFactor = 0.5;
-    if (Math.max(width, height) > 4000) scaleFactor = 0.3;
+    let scaleFactor = 0.2;
+    if (Math.max(width, height) < 1000) scaleFactor = 0.5;
+    if (Math.max(width, height) > 4000) scaleFactor = 0.08;
     const sW = Math.round(width * scaleFactor), sH = Math.round(height * scaleFactor);
 
     const gray = grayscale(originalData);
@@ -1607,16 +1607,16 @@ function analyzeImageCore(originalData, width, height) {
     const fatAreaRatio = fatArea / targetArea;
 
     let grade;
-    if (fatAreaRatio <= 0.00275) grade = 'Grade 1';
-    else if (fatAreaRatio <= 0.02284) grade = 'Grade 2';
-    else if (fatAreaRatio <= 0.05902) grade = 'Grade 3';
-    else if (fatAreaRatio <= 0.08703) grade = 'Grade 4';
-    else if (fatAreaRatio <= 0.12464) grade = 'Grade 5';
-    else if (fatAreaRatio <= 0.18045) grade = 'Grade 6';
-    else if (fatAreaRatio <= 0.23508) grade = 'Grade 7';
-    else if (fatAreaRatio <= 0.28232) grade = 'Grade 8';
-    else if (fatAreaRatio <= 0.33355) grade = 'Grade 9';
-    else grade = 'Grade 10+';
+    if (fatAreaRatio <= 0.00275) grade = '1级';
+    else if (fatAreaRatio <= 0.02284) grade = '2级';
+    else if (fatAreaRatio <= 0.05902) grade = '3级';
+    else if (fatAreaRatio <= 0.08703) grade = '4级';
+    else if (fatAreaRatio <= 0.12464) grade = '5级';
+    else if (fatAreaRatio <= 0.18045) grade = '6级';
+    else if (fatAreaRatio <= 0.23508) grade = '7级';
+    else if (fatAreaRatio <= 0.28232) grade = '8级';
+    else if (fatAreaRatio <= 0.33355) grade = '9级';
+    else grade = '10+级';
 
     const markedImage = new Uint8ClampedArray(imageX);
     for (let i = 0; i < width*height; i++) {
