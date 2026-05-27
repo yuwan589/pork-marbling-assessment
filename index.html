@@ -1451,9 +1451,9 @@ function rgbToLab(r, g, b) {
 }
 
 function analyzeImageCore(originalData, width, height) {
-    let scaleFactor = 0.2;
-    if (Math.max(width, height) < 1000) scaleFactor = 0.5;
-    if (Math.max(width, height) > 4000) scaleFactor = 0.08;
+    let scaleFactor = 1.0;
+    if (Math.max(width, height) > 2000) scaleFactor = 0.5;
+    if (Math.max(width, height) > 4000) scaleFactor = 0.3;
     const sW = Math.round(width * scaleFactor), sH = Math.round(height * scaleFactor);
 
     const gray = grayscale(originalData);
